@@ -40,13 +40,11 @@ default
 { 
     state_entry()
     {
-        llListen(8, "", "", "");
+        llListen(recieving_channel, "", "", "");
     }
 
     listen(integer channel, string name, key id, string message)
     {
-        if(channel != recieving_channel) return;
-        
         integer user_index = llListFindList(trusted_list, [name]);
         if(user_index == -1 )
         {
