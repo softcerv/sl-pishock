@@ -1,5 +1,7 @@
 // Who do you trust enough to let access the collar?
 list trusted_list = ["SAMPLE Resident"]; 
+// What suffix do we want to use for commands?
+string suffix = "SUFFIX_HERE";
 // What is your share code?
 string share_code = "SAMPLE SHARE CODE";
 // What is your API key?
@@ -8,9 +10,14 @@ string api_key = "SAMPLE KEY";
 string username = "SAMPLE NAME";
 // What channel do we want to recieve our shock requests on?
 integer recieving_channel = 8;
+// Is the relay currently on?
+integer relay_on = TRUE;
+// Do we want to use a whitelist?
+integer use_whitelist = TRUE;
 
 integer send_shock_request(integer type_to_send, integer duration, integer intensity, string name)
 {
+    if(!relay_on) return FALSE;
     // We don't want invalid requests to be submit.
     if(intensity > 100) return FALSE;
     if(duration > 10) return FALSE;
@@ -45,17 +52,22 @@ default
 
     listen(integer channel, string name, key id, string message)
     {
-        integer user_index = llListFindList(trusted_list, [name]);
-        if(user_index == -1 )
-        {
-            llRegionSayTo(id, 0, "You aren't trusted!");            
-            return;
+        if(!relay_on) return;
+        if(use_whitelist){
+            integer user_index = llListFindList(trusted_list, [name]);
+            if(user_index == -1 )
+            {
+                llRegionSayTo(id, 0, "You aren't trusted!");            
+                return;
+            }
         }
         
         list command_list = llParseString2List(message, [" "],[]);
         integer intensity = llList2Integer(command_list, 0);
         integer mode = llList2Integer(command_list, 1);
         integer duration = llList2Integer(command_list, 2);
+        string recieved_suffix = llList2String(command_list, 3);
+    if(recieved_suffix != suffix) return;
 
         send_shock_request(mode, duration, intensity, name);
          
@@ -67,4 +79,14 @@ default
         string shocked_message = shocker_name + " used mode " + (string)mode + " on you at " + (string)intensity + "% intensity for " + (string)duration + " second(s)."; 
         llRegionSayTo(llGetOwner(), 0, shocked_message);
     }
+    touch_start(integer total_number)
+    {
+        relay_on = !relay_on;
+        if(relay_on){
+            llRegionSayTo(llGetOwner(), 0, "The collar is on!");
+            }
+        else {
+            llRegionSayTo(llGetOwner(), 0, "The collar is off!");      
+            }        
+    }    
 }
