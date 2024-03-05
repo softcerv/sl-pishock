@@ -53,6 +53,9 @@ default
     listen(integer channel, string name, key id, string message)
     {
         if(!relay_on) return;
+        string recieved_suffix = llList2String(command_list, 3);
+        if(recieved_suffix != suffix) return;
+
         if(use_whitelist){
             integer user_index = llListFindList(trusted_list, [name]);
             if(user_index == -1 )
@@ -66,9 +69,6 @@ default
         integer intensity = llList2Integer(command_list, 0);
         integer mode = llList2Integer(command_list, 1);
         integer duration = llList2Integer(command_list, 2);
-        string recieved_suffix = llList2String(command_list, 3);
-    if(recieved_suffix != suffix) return;
-
         send_shock_request(mode, duration, intensity, name);
          
         string owner_name = llKey2Name(llGetOwner());
@@ -79,6 +79,7 @@ default
         string shocked_message = shocker_name + " used mode " + (string)mode + " on you at " + (string)intensity + "% intensity for " + (string)duration + " second(s)."; 
         llRegionSayTo(llGetOwner(), 0, shocked_message);
     }
+
     touch_start(integer total_number)
     {
         relay_on = !relay_on;
